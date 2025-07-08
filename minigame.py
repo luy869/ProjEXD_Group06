@@ -1,5 +1,6 @@
 import pygame
 import sys
+from japanese_font import get_font
 
 pygame.init()
 screen = pygame.display.set_mode((640, 480))
@@ -14,8 +15,8 @@ games = ["ゲーム1", "ゲーム2", "ゲーム3", "ゲーム4", "ゲーム5"]
 
 def draw_home_screen():
     screen.fill((30, 30, 30))
-    font_title = pygame.font.Font(None, 64)
-    font_button = pygame.font.Font(None, 40)
+    font_title = get_font(64)
+    font_button = get_font(40)
 
     # タイトル表示
     title = font_title.render("こうかとんミニゲーム集", True, (255, 255, 255))
@@ -33,7 +34,7 @@ def draw_home_screen():
 
 def draw_game_screen(game_number):
     screen.fill((0, 0, 0))
-    font = pygame.font.Font(None, 50)
+    font = get_font(50)
     text = font.render(f"ゲーム{game_number}画面（仮）", True, (255, 255, 255))
     screen.blit(text, (150, 200))
 
