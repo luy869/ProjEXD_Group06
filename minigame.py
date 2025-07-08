@@ -14,6 +14,9 @@ current_screen = "home"
 games = ["ゲーム1", "ゲーム2", "ゲーム3", "ゲーム4", "ゲーム5"]
 
 def draw_home_screen():
+    """
+    ホーム画面を描写
+    """
     screen.fill((30, 30, 30))
     font_title = get_font(64)
     font_button = get_font(40)
@@ -33,6 +36,9 @@ def draw_home_screen():
     return button_rects
 
 def draw_game_screen(game_number):
+    """
+    それぞれのゲームへの遷移
+    """
     screen.fill((0, 0, 0))
     font = get_font(50)
     text = font.render(f"ゲーム{game_number}画面（仮）", True, (255, 255, 255))
@@ -59,6 +65,7 @@ def main():
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 pos = event.pos
+                #もしクリックされたときにホームなら、ボタンとの接触を判定する
                 if current_screen == "home":
                     for i, rect in enumerate(button_rects):
                         if rect.collidepoint(pos):
