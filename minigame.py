@@ -15,7 +15,9 @@ current_screen = "home"
 games = ["ゲーム1", "ゲーム2", "ゲーム3", "ゲーム4", "ゲーム5"]
 
 class HockeyGame:
-    def __init__(self, screen_surface):
+    """ホッケーゲームのクラス
+    このクラスは、ホッケーゲームのロジックと描画を管理します。"""
+    def __init__(self, screen_surface:pygame.Surface):
         self.screen = screen_surface
         self.font_score = get_font(50)
         self.font_small = get_font(24)
