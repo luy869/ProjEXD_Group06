@@ -46,6 +46,57 @@ def draw_game_screen(game_number):
 
     return back_rect
 
+class Card(pygame.sprite.Sprite):
+    def __init__(self, suit, rank):
+        self.suit = suit
+        self.rank = rank
+        self.image = pygame.image.load(f"{self.suit}_{self.rank}.png").convert_alpha()
+        self.rect = self.image.get_rect()
+    
+    def getvalue(self):
+        if self.rank == ["J", "Q", "K"]:
+            return 10
+        elif self.rank == "A":
+            return 11
+        else:
+            return int(self.rank)
+
+
+class BlackjackGame:
+    def __init__(self):
+        self.deck = self.create_deck()
+        self.player_hand = []
+        self.dealer_hand = []
+        self.deal_initial_cards()
+
+    def create_deck(self):
+        suits = ["heart", "daiya", "clover", "spade"]
+        ranks = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"]
+        return [Card(suit, rank) for suit in suits for rank in ranks]
+
+    def deal_initial_cards(self):
+        for _ in range(2):
+            self.player_hand.append(self.deck.pop())
+            self.dealer_hand.append(self.deck.pop())
+
+    def calculate_hand_value(self, hand):
+        value = sum(card.getvalue() for card in hand)
+        aces = sum(1 for card in hand if card.rank == "A")
+        while value > 21 and aces:
+            value -= 10
+            aces -= 1
+        return value
+    
+    def start_new_game(self):
+        self.player_hand = [self.deck.pop(), self.deck.pop()]
+        self.dealer_hand = [self.deck.pop(), self.deck.pop()]
+        self.game_state = "player_turn"  # "dealer_turn", "game_over"
+        self.message = "あなたのターン"
+    
+    def handle_event(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.key == pygame.K_h:
+
 def main():
     global current_screen
 
