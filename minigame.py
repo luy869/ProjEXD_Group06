@@ -157,10 +157,8 @@ def clicker_main():
 
     while True:
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                return
 
-            elif event.type == pygame.MOUSEBUTTONDOWN:
+            if event.type == pygame.MOUSEBUTTONDOWN:
                 if not show_shop and not game_clear and koukaton_rect.collidepoint(event.pos):
                     count += click_power      # スコア増加
                     coin += click_power
@@ -185,6 +183,8 @@ def clicker_main():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_s and not game_clear:
                     show_shop = not show_shop
+                if event.key == pygame.escape:
+                    return
 
             elif event.type == AUTO_EVENT and not game_clear:
                 if auto_power > 0:
