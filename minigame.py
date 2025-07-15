@@ -6,6 +6,7 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 import random
 from japanese_font import get_font
 from game6.game6 import ShootingGame  # game6のimportを有効化
+from game3.game3 import RhythmGame  # game3のimportを追加
 
 pygame.init()
 screen = pygame.display.set_mode((800, 600))
@@ -507,21 +508,29 @@ def main():
                                     current_screen = "home"
                                 elif result == "quit":
                                     running = False
+                            elif i == 2:  # ゲーム3
+                                # ゲーム3（リズムゲーム）を実行
+                                game3 = RhythmGame()
+                                result = game3.run()
+                                if result == "home":
+                                    current_screen = "home"
+                                elif result == "quit":
+                                    running = False
                             elif i == 0:
                                 clicker_main()
                             elif i == 1:
                                 current_screen = "game2"
                                 blackjack = BlackjackGame()
                             else:
-                                # ゲーム1, 3, 4, 5は仮の画面として扱う
-                                
-                                if i == 2:
-                                    current_screen = "game3"
-                                elif i == 3:
+                                # ゲーム1, 4, 5は仮の画面として扱う
+                                if i == 3:
                                     current_screen = "game4"
                                 elif i == 4:
                                     current_screen = "game5"
-                            current_screen = f"game{i+1}"
+                            
+                            # game3とgame6以外の場合のみcurrent_screenを変更
+                            if i not in [2, 5]:
+                                current_screen = f"game{i+1}"
                 elif current_screen.startswith("game") and current_screen != "game6":
                     # 他のゲーム画面で「ホームに戻る」ボタンを押したら戻る
                     back_rect = draw_game_screen(int(current_screen[-1]))
@@ -535,13 +544,11 @@ def main():
         elif current_screen == "game2" and blackjack:
             blackjack.update()
             blackjack.draw()
-
-            
         elif current_screen == "game5":
             game5 = HockeyGame(screen) # ゲームの準備
             game5.run()                # ゲーム開始
             current_screen = "home"    # ゲームが終わったらホームに戻る
-        elif current_screen.startswith("game") and current_screen != "game6":
+        elif current_screen.startswith("game") and current_screen not in ["game3", "game6"]:
             game_num = int(current_screen[-1])
             draw_game_screen(game_num)
 
