@@ -4,6 +4,8 @@ import random
 import sys
 import os
 from japanese_font import get_font
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 
 class Player:
     def __init__(self, x, y):

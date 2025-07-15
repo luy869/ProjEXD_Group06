@@ -1,5 +1,7 @@
 import pygame
 import sys
+import os
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 from japanese_font import get_font
 from game6 import ShootingGame  
 
