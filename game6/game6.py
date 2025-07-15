@@ -4,8 +4,6 @@ import random
 import sys
 import os
 from japanese_font import get_font
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
-
 
 class Player:
     def __init__(self, x, y):
@@ -17,15 +15,21 @@ class Player:
         self.invulnerable = 0
         self.lives = 3
         self.power = 100
-        self.character = "player"  # プレイヤーキャラクター
+        self.character = "player"
         
-        # 画像の読み込み
+        # 画像の読み込み - パスを修正
         try:
-            self.image = pygame.image.load("fig/alien1.png")
-            self.image = pygame.transform.scale(self.image, (32, 32))  # 適切なサイズに調整
+            # 現在のファイルの位置から親ディレクトリのfigフォルダにアクセス
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            parent_dir = os.path.dirname(current_dir)
+            image_path = os.path.join(parent_dir, "fig", "alien1.png")
+            
+            self.image = pygame.image.load(image_path)
+            self.image = pygame.transform.scale(self.image, (32, 32))
             self.image_rect = self.image.get_rect()
         except:
-            print("alien1.pngが見つかりません。デフォルトの描画を使用します。")
+            print(f"alien1.pngが見つかりません。パス: {image_path if 'image_path' in locals() else '不明'}")
+            print("デフォルトの描画を使用します。")
             self.image = None
         
     def update(self, keys):
@@ -273,15 +277,21 @@ class Enemy:
         self.bullet_timer = 0
         self.pattern_timer = 0
         self.pattern_phase = 0
-        self.name = "ボス"  # ボス名を一般的に変更
+        self.name = "ボス"
         
-        # 画像の読み込み
+        # 画像の読み込み - パスを修正
         try:
-            self.image = pygame.image.load("fig/3.png")
-            self.image = pygame.transform.scale(self.image, (64, 64))  # ボスは大きめに調整
+            # 現在のファイルの位置から親ディレクトリのfigフォルダにアクセス
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            parent_dir = os.path.dirname(current_dir)
+            image_path = os.path.join(parent_dir, "fig", "3.png")
+            
+            self.image = pygame.image.load(image_path)
+            self.image = pygame.transform.scale(self.image, (64, 64))
             self.image_rect = self.image.get_rect()
         except:
-            print("3.pngが見つかりません。デフォルトの描画を使用します。")
+            print(f"3.pngが見つかりません。パス: {image_path if 'image_path' in locals() else '不明'}")
+            print("デフォルトの描画を使用します。")
             self.image = None
         
     def update(self, player):
