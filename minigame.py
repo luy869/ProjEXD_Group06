@@ -1,19 +1,21 @@
 import pygame
 import sys
 import os
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 import random
 from japanese_font import get_font
+from game6.game6 import ShootingGame  # game6のimportを有効化
 
 pygame.init()
-screen = pygame.display.set_mode((640, 480))
+screen = pygame.display.set_mode((800, 600))
 pygame.display.set_caption("こうかとんミニゲーム集 ホーム画面")
 clock = pygame.time.Clock()
 
-# 現在の画面状態（home または game1~game5）
+# 現在の画面状態（home または game1~game6）
 current_screen = "home"
 
 # ボタンリスト
-games = ["こうかとんクリッカー", "ゲーム2", "ゲーム3", "ゲーム4", "ゲーム5"]
+games = ["ゲーム1", "ゲーム2", "ゲーム3", "ゲーム4", "ゲーム5", "ゲーム6"]
 
 class HockeyGame:
     """ホッケーゲームのクラス
@@ -255,7 +257,7 @@ def draw_home_screen():
 
     button_rects = []
     for i, game_name in enumerate(games):
-        rect = pygame.Rect(220, 150 + i * 70, 200, 50)
+        rect = pygame.Rect(300, 150 + i * 60, 200, 50)
         pygame.draw.rect(screen, (70, 130, 180), rect)
         text = font_button.render(game_name, True, (255, 255, 255))
         screen.blit(text, (rect.x + 20, rect.y + 10))
@@ -266,16 +268,39 @@ def draw_home_screen():
 def draw_game_screen(game_number):
     screen.fill((0, 0, 0))
     font = get_font(50)
-    text = font.render(f"ゲーム{game_number}画面（仮）", True, (255, 255, 255))
-    screen.blit(text, (150, 200))
+    
+    if game_number == 6:
+        # ゲーム6のタイトル画面
+        title_text = font.render("弾幕シューティングゲーム", True, (255, 255, 255))
+        screen.blit(title_text, (100, 180))
+        
+        # スタートボタン
+        start_rect = pygame.Rect(220, 250, 200, 60)
+        pygame.draw.rect(screen, (50, 180, 50), start_rect)
+        start_text = get_font(32).render("スタート", True, (255, 255, 255))
+        text_rect = start_text.get_rect(center=start_rect.center)
+        screen.blit(start_text, text_rect)
+        
+        # 戻るボタン
+        back_rect = pygame.Rect(220, 330, 200, 60)
+        pygame.draw.rect(screen, (180, 50, 50), back_rect)
+        back_text = get_font(32).render("ホームに戻る", True, (255, 255, 255))
+        text_rect2 = back_text.get_rect(center=back_rect.center)
+        screen.blit(back_text, text_rect2)
+        
+        return start_rect, back_rect
+    else:
+        # 他のゲーム画面
+        text = font.render(f"ゲーム{game_number}画面（仮）", True, (255, 255, 255))
+        screen.blit(text, (150, 200))
 
-    # 「ホームに戻る」ボタン
-    back_rect = pygame.Rect(20, 20, 120, 40)
-    pygame.draw.rect(screen, (180, 50, 50), back_rect)
-    back_text = font.render("ホームに戻る", True, (255, 255, 255))
-    screen.blit(back_text, (back_rect.x + 5, back_rect.y + 5))
+        # 「ホームに戻る」ボタン
+        back_rect = pygame.Rect(20, 20, 120, 40)
+        pygame.draw.rect(screen, (180, 50, 50), back_rect)
+        back_text = font.render("ホームに戻る", True, (255, 255, 255))
+        screen.blit(back_text, (back_rect.x + 5, back_rect.y + 5))
 
-    return back_rect
+        return back_rect
 
 def main():
     global current_screen
@@ -293,12 +318,20 @@ def main():
                 if current_screen == "home":
                     for i, rect in enumerate(button_rects):
                         if rect.collidepoint(pos):
-                            if i == 0:
+                            if i == 5:  # ゲーム6
+                                # ゲーム6を別ファイルで実行
+                                game6 = ShootingGame()  
+                                result = game6.run()
+                                if result == "home":
+                                    current_screen = "home"
+                                elif result == "quit":
+                                    running = False
+                            elif i == 0:
                                 clicker_main()
                             else:
                                 current_screen = f"game{i+1}"
-                else:
-                    # ゲーム画面で「ホームに戻る」ボタンを押したら戻る
+                elif current_screen.startswith("game") and current_screen != "game6":
+                    # 他のゲーム画面で「ホームに戻る」ボタンを押したら戻る
                     back_rect = draw_game_screen(int(current_screen[-1]))
                     if back_rect.collidepoint(pos):
                         current_screen = "home"
@@ -309,7 +342,7 @@ def main():
             game5 = HockeyGame(screen) # ゲームの準備
             game5.run()                # ゲーム開始
             current_screen = "home"    # ゲームが終わったらホームに戻る
-        else:
+        elif current_screen.startswith("game") and current_screen != "game6":
             game_num = int(current_screen[-1])
             draw_game_screen(game_num)
 
@@ -320,4 +353,5 @@ def main():
     sys.exit()
 
 if __name__ == "__main__":
+    main()
     main()
