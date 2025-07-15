@@ -1,7 +1,7 @@
 import pygame
 import sys
 from japanese_font import get_font
-from game6_touhou import TouhouGame
+from game6 import ShootingGame  
 
 pygame.init()
 screen = pygame.display.set_mode((800, 600))
@@ -45,8 +45,8 @@ def draw_game_screen(game_number):
     
     if game_number == 6:
         # ゲーム6のタイトル画面
-        title_text = font.render("東方風弾幕ゲーム", True, (255, 255, 255))
-        screen.blit(title_text, (150, 180))
+        title_text = font.render("弾幕シューティングゲーム", True, (255, 255, 255))
+        screen.blit(title_text, (100, 180))
         
         # スタートボタン
         start_rect = pygame.Rect(220, 250, 200, 60)
@@ -94,7 +94,7 @@ def main():
                         if rect.collidepoint(pos):
                             if i == 5:  # ゲーム6
                                 # ゲーム6を別ファイルで実行
-                                game6 = TouhouGame()
+                                game6 = ShootingGame()  
                                 result = game6.run()
                                 if result == "home":
                                     current_screen = "home"

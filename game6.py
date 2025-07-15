@@ -15,7 +15,7 @@ class Player:
         self.invulnerable = 0
         self.lives = 3
         self.power = 100
-        self.character = "reimu"  # メインキャラクター
+        self.character = "player"  # プレイヤーキャラクター
         
         # 画像の読み込み
         try:
@@ -262,7 +262,7 @@ class SniperEnemy(SmallEnemy):
         pygame.draw.line(screen, (255, 150, 0), (int(self.x), int(self.y - 8)), (int(self.x), int(self.y + 8)), 2)
 
 class Enemy:
-    def __init__(self, x, y, hp=1200):  # 体力を4倍に変更（300 → 1200）
+    def __init__(self, x, y, hp=1200):
         self.x = x
         self.y = y
         self.hp = hp
@@ -271,7 +271,7 @@ class Enemy:
         self.bullet_timer = 0
         self.pattern_timer = 0
         self.pattern_phase = 0
-        self.name = "妖怪"
+        self.name = "ボス"  # ボス名を一般的に変更
         
         # 画像の読み込み
         try:
@@ -381,11 +381,11 @@ class Enemy:
         name_text = font.render(self.name, True, (255, 255, 255))
         screen.blit(name_text, (bar_x, bar_y - 25))
 
-class TouhouGame:
+class ShootingGame:  # クラス名を変更
     def __init__(self):
         pygame.init()
         self.screen = pygame.display.set_mode((800, 600))
-        pygame.display.set_caption("弾幕シューティングゲーム")  # タイトル変更
+        pygame.display.set_caption("弾幕シューティングゲーム")
         self.clock = pygame.time.Clock()
         
         # BGM初期化
