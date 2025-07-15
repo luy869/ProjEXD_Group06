@@ -17,6 +17,15 @@ class Player:
         self.power = 100
         self.character = "reimu"  # 霊夢
         
+        # 画像の読み込み
+        try:
+            self.image = pygame.image.load("fig/alien1.png")
+            self.image = pygame.transform.scale(self.image, (32, 32))  # 適切なサイズに調整
+            self.image_rect = self.image.get_rect()
+        except:
+            print("alien1.pngが見つかりません。デフォルトの描画を使用します。")
+            self.image = None
+        
     def update(self, keys):
         speed = self.slow_speed if keys[pygame.K_LSHIFT] else self.speed
         
@@ -33,15 +42,23 @@ class Player:
             self.invulnerable -= 1
     
     def draw(self, screen):
-        # 霊夢らしい巫女キャラクター描画
-        if self.invulnerable % 10 < 5:  # 点滅効果
-            # 本体（赤色）
-            pygame.draw.circle(screen, (255, 100, 100), (int(self.x), int(self.y)), 8)
-            # 髪（黒色）
-            pygame.draw.circle(screen, (50, 50, 50), (int(self.x), int(self.y - 5)), 6)
-            # 髪飾り（赤色）
-            pygame.draw.circle(screen, (255, 50, 50), (int(self.x - 3), int(self.y - 8)), 2)
-            pygame.draw.circle(screen, (255, 50, 50), (int(self.x + 3), int(self.y - 8)), 2)
+        # 点滅効果の判定
+        should_draw = self.invulnerable % 10 < 5
+        
+        if should_draw:
+            if self.image:
+                # 画像がある場合は画像を描画
+                self.image_rect.center = (int(self.x), int(self.y))
+                screen.blit(self.image, self.image_rect)
+            else:
+                # 画像がない場合はデフォルトの描画
+                # 本体（赤色）
+                pygame.draw.circle(screen, (255, 100, 100), (int(self.x), int(self.y)), 8)
+                # 髪（黒色）
+                pygame.draw.circle(screen, (50, 50, 50), (int(self.x), int(self.y - 5)), 6)
+                # 髪飾り（赤色）
+                pygame.draw.circle(screen, (255, 50, 50), (int(self.x - 3), int(self.y - 8)), 2)
+                pygame.draw.circle(screen, (255, 50, 50), (int(self.x + 3), int(self.y - 8)), 2)
             
             # 当たり判定の表示（低速時）
             if pygame.key.get_pressed()[pygame.K_LSHIFT]:
@@ -80,13 +97,14 @@ class SmallEnemy:
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.hp = 30
-        self.max_hp = 30
+        self.hp = 1  # 一発で倒せるように変更
+        self.max_hp = 1
         self.radius = 12
         self.speed = 1.5
         self.bullet_timer = 0
         self.move_timer = 0
         self.move_direction = random.choice([-1, 1])
+        self.enemy_type = "fairy"  # 敵タイプ識別
         
     def update(self, player):
         self.bullet_timer += 1
@@ -124,8 +142,127 @@ class SmallEnemy:
         pygame.draw.circle(screen, (0, 0, 0), (int(self.x - 4), int(self.y - 3)), 1)
         pygame.draw.circle(screen, (0, 0, 0), (int(self.x + 4), int(self.y - 3)), 1)
 
+class SpiralEnemy(SmallEnemy):
+    """螺旋弾幕を撃つ雑魚敵"""
+    def __init__(self, x, y):
+        super().__init__(x, y)
+        self.hp = 1  # 一発で倒せるように変更
+        self.max_hp = 1
+        self.enemy_type = "spiral"
+        self.speed = 1.0
+        
+    def update(self, player):
+        self.bullet_timer += 1
+        self.move_timer += 1
+        
+        # 円運動しながら下に降りる
+        self.x += math.sin(self.move_timer * 0.1) * 2
+        self.y += 0.6
+        
+    def shoot(self):
+        """螺旋弾幕"""
+        bullets = []
+        if self.bullet_timer % 40 == 0:
+            for i in range(6):
+                angle = (i * 60 + self.bullet_timer * 3) * math.pi / 180
+                bullets.append(EnemyBullet(self.x, self.y, angle, 1.8, (150, 150, 255)))
+        return bullets
+        
+    def draw(self, screen):
+        # 螺旋敵キャラクター（青系）
+        pygame.draw.circle(screen, (150, 150, 255), (int(self.x), int(self.y)), self.radius)
+        # 螺旋模様
+        for i in range(4):
+            angle = (self.move_timer * 5 + i * 90) * math.pi / 180
+            spiral_x = self.x + math.cos(angle) * 6
+            spiral_y = self.y + math.sin(angle) * 6
+            pygame.draw.circle(screen, (100, 100, 200), (int(spiral_x), int(spiral_y)), 2)
+
+class FastEnemy(SmallEnemy):
+    """素早く動く雑魚敵"""
+    def __init__(self, x, y):
+        super().__init__(x, y)
+        self.hp = 1  # 一発で倒せるように変更
+        self.max_hp = 1
+        self.enemy_type = "fast"
+        self.speed = 3.0
+        self.dash_timer = 0
+        
+    def update(self, player):
+        self.bullet_timer += 1
+        self.move_timer += 1
+        self.dash_timer += 1
+        
+        # 素早いジグザグ移動
+        if self.dash_timer % 60 < 30:
+            self.x += self.move_direction * self.speed * 1.5
+        else:
+            self.x += self.move_direction * self.speed * 0.5
+            
+        self.y += 1.2
+        
+        # 画面端で反転
+        if self.x < 50 or self.x > 750:
+            self.move_direction *= -1
+            
+    def shoot(self):
+        """高速連射"""
+        bullets = []
+        if self.bullet_timer % 30 == 0:
+            # プレイヤー狙い撃ち
+            angle = math.pi / 2  # 真下
+            bullets.append(EnemyBullet(self.x, self.y, angle, 3.5, (255, 100, 100)))
+        return bullets
+        
+    def draw(self, screen):
+        # 高速敵キャラクター（赤系）
+        pygame.draw.circle(screen, (255, 150, 100), (int(self.x), int(self.y)), self.radius)
+        # 残像効果
+        if self.dash_timer % 60 < 30:
+            pygame.draw.circle(screen, (255, 200, 150), (int(self.x), int(self.y)), self.radius + 3, 2)
+
+class SniperEnemy(SmallEnemy):
+    """プレイヤーを狙い撃ちする雑魚敵"""
+    def __init__(self, x, y):
+        super().__init__(x, y)
+        self.hp = 1  # 一発で倒せるように変更
+        self.max_hp = 1
+        self.enemy_type = "sniper"
+        self.speed = 0.8
+        
+    def update(self, player):
+        self.bullet_timer += 1
+        self.move_timer += 1
+        
+        # ゆっくりと左右に移動
+        self.x += math.sin(self.move_timer * 0.05) * 1.5
+        self.y += 0.5
+        
+    def shoot(self, player=None):
+        """プレイヤー狙い撃ち弾幕"""
+        bullets = []
+        if self.bullet_timer % 80 == 0 and player:
+            # プレイヤーへの角度を計算
+            dx = player.x - self.x
+            dy = player.y - self.y
+            angle = math.atan2(dy, dx)
+            
+            # 狙い撃ち弾
+            bullets.append(EnemyBullet(self.x, self.y, angle, 2.5, (255, 255, 100)))
+            # 両脇にも弾を撃つ
+            bullets.append(EnemyBullet(self.x, self.y, angle - 0.2, 2.2, (255, 200, 100)))
+            bullets.append(EnemyBullet(self.x, self.y, angle + 0.2, 2.2, (255, 200, 100)))
+        return bullets
+        
+    def draw(self, screen):
+        # 狙撃敵キャラクター（黄系）
+        pygame.draw.circle(screen, (255, 255, 100), (int(self.x), int(self.y)), self.radius)
+        # 照準マーク
+        pygame.draw.line(screen, (255, 150, 0), (int(self.x - 8), int(self.y)), (int(self.x + 8), int(self.y)), 2)
+        pygame.draw.line(screen, (255, 150, 0), (int(self.x), int(self.y - 8)), (int(self.x), int(self.y + 8)), 2)
+
 class Enemy:
-    def __init__(self, x, y, hp=300):
+    def __init__(self, x, y, hp=1200):  # 体力を4倍に変更（300 → 1200）
         self.x = x
         self.y = y
         self.hp = hp
@@ -135,6 +272,15 @@ class Enemy:
         self.pattern_timer = 0
         self.pattern_phase = 0
         self.name = "妖怪"
+        
+        # 画像の読み込み
+        try:
+            self.image = pygame.image.load("fig/3.png")
+            self.image = pygame.transform.scale(self.image, (64, 64))  # ボスは大きめに調整
+            self.image_rect = self.image.get_rect()
+        except:
+            print("3.pngが見つかりません。デフォルトの描画を使用します。")
+            self.image = None
         
     def update(self, player):
         self.bullet_timer += 1
@@ -206,14 +352,19 @@ class Enemy:
             return self.shoot_pattern4()
             
     def draw(self, screen):
-        # 敵キャラクター（東方らしい妖怪風）
-        # 本体
-        pygame.draw.circle(screen, (200, 100, 255), (int(self.x), int(self.y)), self.radius)
-        # 目
-        pygame.draw.circle(screen, (255, 255, 255), (int(self.x - 8), int(self.y - 5)), 4)
-        pygame.draw.circle(screen, (255, 255, 255), (int(self.x + 8), int(self.y - 5)), 4)
-        pygame.draw.circle(screen, (0, 0, 0), (int(self.x - 8), int(self.y - 5)), 2)
-        pygame.draw.circle(screen, (0, 0, 0), (int(self.x + 8), int(self.y - 5)), 2)
+        if self.image:
+            # 画像がある場合は画像を描画
+            self.image_rect.center = (int(self.x), int(self.y))
+            screen.blit(self.image, self.image_rect)
+        else:
+            # 画像がない場合はデフォルトの描画
+            # 本体
+            pygame.draw.circle(screen, (200, 100, 255), (int(self.x), int(self.y)), self.radius)
+            # 目
+            pygame.draw.circle(screen, (255, 255, 255), (int(self.x - 8), int(self.y - 5)), 4)
+            pygame.draw.circle(screen, (255, 255, 255), (int(self.x + 8), int(self.y - 5)), 4)
+            pygame.draw.circle(screen, (0, 0, 0), (int(self.x - 8), int(self.y - 5)), 2)
+            pygame.draw.circle(screen, (0, 0, 0), (int(self.x + 8), int(self.y - 5)), 2)
         
         # HPバー
         bar_width = 150
@@ -273,7 +424,7 @@ class TouhouGame:
         """BGM再生"""
         try:
             pygame.mixer.music.play(-1, 0.0)
-            pygame.mixer.music.set_volume(0.3)
+            pygame.mixer.music.set_volume(0.15)  # 音量を半分に (0.3 → 0.15)
         except:
             pass
             
@@ -412,7 +563,7 @@ class TouhouGame:
     def reset_game(self):
         """ゲームリセット"""
         self.player = Player(400, 500)
-        self.enemy = Enemy(400, 100)
+        self.enemy = Enemy(400, 100)  # 新しい体力設定でボス作成
         self.small_enemies = []
         self.small_enemy_spawn_timer = 0
         self.game_phase = "small_enemies"
@@ -433,7 +584,7 @@ class TouhouGame:
             if self.game_phase == "boss_fight":
                 if (bullet.x - self.enemy.x) ** 2 + (bullet.y - self.enemy.y) ** 2 < (bullet.radius + self.enemy.radius) ** 2:
                     self.player_bullets.remove(bullet)
-                    self.enemy.hp -= 10
+                    self.enemy.hp -= 10  # ボスへのダメージは据え置き
                     self.score += 100
                     hit = True
             
@@ -442,11 +593,11 @@ class TouhouGame:
                 for small_enemy in self.small_enemies[:]:
                     if (bullet.x - small_enemy.x) ** 2 + (bullet.y - small_enemy.y) ** 2 < (bullet.radius + small_enemy.radius) ** 2:
                         self.player_bullets.remove(bullet)
-                        small_enemy.hp -= 10
+                        small_enemy.hp -= 1  # 雑魚敵は一発で倒す
                         self.score += 50
                         hit = True
                         
-                        # 雑魚敵のHPが0になったら削除
+                        # 雑魚敵のHPが0になったら削除（一発で必ず0になる）
                         if small_enemy.hp <= 0:
                             self.small_enemies.remove(small_enemy)
                             self.score += 200
@@ -503,35 +654,42 @@ class TouhouGame:
                 # プレイヤー更新
                 self.player.update(keys)
                 
-                # 射撃処理
+                # 射撃処理（発射レート向上: 5フレーム間隔 → 3フレーム間隔）
                 if keys[pygame.K_z]:
                     if not self.shooting:
                         self.shooting = True
                         self.shoot_timer = 0
-                    if self.shoot_timer % 5 == 0:
+                    if self.shoot_timer % 3 == 0:  # 3フレームごとに発射
                         self.player_bullets.append(PlayerBullet(self.player.x, self.player.y - 10))
                     self.shoot_timer += 1
                 else:
                     self.shooting = False
                 
-                # フェーズ管理（20秒でボス戦に移行）
-                if self.game_timer > 1200 and self.game_phase == "small_enemies":  # 60fps * 20秒 = 1200フレーム
+                # フェーズ管理（30秒でボス戦に移行）
+                if self.game_timer > 1800 and self.game_phase == "small_enemies":  # 60fps * 30秒 = 1800フレーム
                     self.game_phase = "boss_fight"
                     self.small_enemies = []  # 雑魚敵をクリア
                     print("ボス戦開始！")
                 
                 # 雑魚敵フェーズの処理
                 if self.game_phase == "small_enemies":
-                    # 雑魚敵スポーン
+                    # 雑魚敵スポーン（出現頻度増加: 2秒に1回 → 1秒に1回）
                     self.small_enemy_spawn_timer += 1
-                    if self.small_enemy_spawn_timer % 120 == 0:  # 2秒に1回
+                    if self.small_enemy_spawn_timer % 60 == 0:  # 1秒に1回（120 → 60）
                         spawn_x = random.randint(50, 750)
-                        self.small_enemies.append(SmallEnemy(spawn_x, 50))
+                        # ランダムに雑魚敵の種類を選択
+                        enemy_types = [SmallEnemy, SpiralEnemy, FastEnemy, SniperEnemy]
+                        enemy_class = random.choice(enemy_types)
+                        self.small_enemies.append(enemy_class(spawn_x, 50))
                     
                     # 雑魚敵更新
                     for small_enemy in self.small_enemies[:]:
                         small_enemy.update(self.player)
-                        new_bullets = small_enemy.shoot()
+                        # SniperEnemyの場合はプレイヤーを渡す
+                        if isinstance(small_enemy, SniperEnemy):
+                            new_bullets = small_enemy.shoot(self.player)
+                        else:
+                            new_bullets = small_enemy.shoot()
                         self.enemy_bullets.extend(new_bullets)
                         
                         # 画面外に出た雑魚敵を削除
