@@ -134,7 +134,7 @@ def clicker_main():
 
     #こうかとんの表示
     base_dir = os.path.dirname(__file__)
-    image_path = os.path.join(base_dir, "fig", "koukaton.png")
+    image_path = os.path.join(base_dir, "fig", "3.png")
     try:
         koukaton_img = pygame.image.load(image_path)
         koukaton_img = pygame.transform.scale(koukaton_img, (150, 150))
