@@ -15,7 +15,7 @@ class Player:
         self.invulnerable = 0
         self.lives = 3
         self.power = 100
-        self.character = "reimu"  # 霊夢
+        self.character = "reimu"  # メインキャラクター
         
         # 画像の読み込み
         try:
@@ -133,7 +133,7 @@ class SmallEnemy:
         return bullets
     
     def draw(self, screen):
-        # 雑魚敵キャラクター（小さめの妖精風）
+        # 雑魚敵キャラクター（小さめの敵キャラ風）
         # 本体
         pygame.draw.circle(screen, (150, 255, 150), (int(self.x), int(self.y)), self.radius)
         # 目
@@ -286,7 +286,7 @@ class Enemy:
         self.bullet_timer += 1
         self.pattern_timer += 1
         
-        # 移動パターン（東方らしいS字移動）
+        # 移動パターン（S字移動）
         if self.pattern_timer < 120:
             self.x += math.sin(self.pattern_timer * 0.08) * 3
         elif self.pattern_timer < 240:
@@ -306,7 +306,7 @@ class Enemy:
         return bullets
         
     def shoot_pattern2(self):
-        """螺旋弾幕（綺麗なパターン）"""
+        """螺旋弾幕（美しいパターン）"""
         bullets = []
         if self.bullet_timer % 6 == 0:
             for i in range(4):
@@ -318,7 +318,7 @@ class Enemy:
         return bullets
         
     def shoot_pattern3(self):
-        """花弾幕（東方らしいパターン）"""
+        """花弾幕（美しいパターン）"""
         bullets = []
         if self.bullet_timer % 30 == 0:
             for i in range(8):
@@ -340,7 +340,7 @@ class Enemy:
         return bullets
         
     def shoot(self):
-        """弾幕パターンの切り替え（東方らしく時間で変化）"""
+        """弾幕パターンの切り替え（時間で変化）"""
         pattern = (self.bullet_timer // 200) % 4
         if pattern == 0:
             return self.shoot_pattern1()
@@ -385,7 +385,7 @@ class TouhouGame:
     def __init__(self):
         pygame.init()
         self.screen = pygame.display.set_mode((800, 600))
-        pygame.display.set_caption("東方風弾幕ゲーム")
+        pygame.display.set_caption("弾幕シューティングゲーム")  # タイトル変更
         self.clock = pygame.time.Clock()
         
         # BGM初期化
@@ -443,7 +443,7 @@ class TouhouGame:
         font_medium = get_font(32)
         font_small = get_font(24)
         
-        title = font_big.render("東方風弾幕ゲーム", True, (255, 255, 255))
+        title = font_big.render("弾幕シューティングゲーム", True, (255, 255, 255))  # タイトル変更
         self.screen.blit(title, (120, 100))
         
         subtitle = font_medium.render("～ Danmaku Shooting ～", True, (200, 200, 255))
