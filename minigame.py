@@ -476,6 +476,202 @@ class BlackjackGame:
             screen.blit(continue_text, (self.continue_button.x + 20, self.continue_button.y + 10))
             screen.blit(home_text, (self.home_button.x + 50, self.home_button.y + 10))
 
+class BlockBreakerGame:
+    """ブロック崩しゲームのクラス"""
+    def __init__(self, screen_surface: pygame.Surface):
+        self.screen = screen_surface
+        self.font_large = get_font(48)
+        self.font_medium = get_font(32)
+        self.font_small = get_font(24)
+        
+        # 色定義
+        self.WHITE = (255, 255, 255)
+        self.BLACK = (0, 0, 0)
+        self.RED = (255, 100, 100)
+        self.BLUE = (100, 100, 255)
+        self.GREEN = (100, 255, 100)
+        self.YELLOW = (255, 255, 100)
+        self.ORANGE = (255, 165, 0)
+        self.PURPLE = (128, 0, 128)
+        
+        # ゲーム設定
+        self.PADDLE_WIDTH = 100
+        self.PADDLE_HEIGHT = 15
+        self.BALL_SIZE = 15
+        self.BLOCK_WIDTH = 70
+        self.BLOCK_HEIGHT = 25
+        self.ROWS = 5
+        self.COLS = 10
+        
+        self.score = 0
+        self.lives = 3
+        self.game_over = False
+        self.game_clear = False
+        self.back_rect = pygame.Rect(10, 10, 150, 40)
+        
+        self.reset_game()
+    
+    def reset_game(self):
+        """ゲームリセット"""
+        # パドル初期化
+        self.paddle_x = 400 - self.PADDLE_WIDTH // 2
+        self.paddle_y = 550
+        
+        # ボール初期化
+        self.ball_x = 400
+        self.ball_y = 300
+        self.ball_dx = 5
+        self.ball_dy = 5
+        
+        # ブロック初期化
+        self.blocks = []
+        colors = [self.RED, self.ORANGE, self.YELLOW, self.GREEN, self.BLUE]
+        
+        total_width = self.COLS * self.BLOCK_WIDTH
+        start_x = (800 - total_width) // 2
+        start_y = 60
+        
+        for row in range(self.ROWS):
+            for col in range(self.COLS):
+                block_x = start_x + col * self.BLOCK_WIDTH
+                block_y = start_y + row * self.BLOCK_HEIGHT
+                color = colors[row % len(colors)]
+                self.blocks.append({
+                    'rect': pygame.Rect(block_x, block_y, self.BLOCK_WIDTH, self.BLOCK_HEIGHT),
+                    'color': color,
+                    'points': (5 - row) * 10
+                })
+    
+    def run(self):
+        """ゲームメインループ"""
+        game_running = True
+        clock = pygame.time.Clock()
+        
+        while game_running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if self.back_rect.collidepoint(event.pos):
+                        game_running = False
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_r and (self.game_over or self.game_clear):
+                        self.score = 0
+                        self.lives = 3
+                        self.game_over = False
+                        self.game_clear = False
+                        self.reset_game()
+            
+            if not self.game_over and not self.game_clear:
+                self.update()
+            
+            self.draw()
+            pygame.display.flip()
+            clock.tick(60)
+    
+    def update(self):
+        """ゲーム更新"""
+        # パドル操作（マウス）
+        mouse_x = pygame.mouse.get_pos()[0]
+        self.paddle_x = max(0, min(800 - self.PADDLE_WIDTH, mouse_x - self.PADDLE_WIDTH // 2))
+        
+        # ボール移動
+        self.ball_x += self.ball_dx
+        self.ball_y += self.ball_dy
+        
+        # 壁との当たり判定
+        if self.ball_x <= self.BALL_SIZE // 2 or self.ball_x >= 800 - self.BALL_SIZE // 2:
+            self.ball_dx *= -1
+        if self.ball_y <= self.BALL_SIZE // 2:
+            self.ball_dy *= -1
+        
+        # パドルとの当たり判定
+        paddle_rect = pygame.Rect(self.paddle_x, self.paddle_y, self.PADDLE_WIDTH, self.PADDLE_HEIGHT)
+        ball_rect = pygame.Rect(self.ball_x - self.BALL_SIZE // 2, self.ball_y - self.BALL_SIZE // 2, 
+                               self.BALL_SIZE, self.BALL_SIZE)
+        
+        if ball_rect.colliderect(paddle_rect) and self.ball_dy > 0:
+            self.ball_dy *= -1
+            hit_pos = (self.ball_x - self.paddle_x) / self.PADDLE_WIDTH
+            self.ball_dx = (hit_pos - 0.5) * 10
+        
+        # ブロックとの当たり判定
+        for block in self.blocks[:]:
+            if ball_rect.colliderect(block['rect']):
+                self.blocks.remove(block)
+                self.score += block['points']
+                self.ball_dy *= -1
+                break
+        
+        # ボールが下に落ちた場合
+        if self.ball_y > 600:
+            self.lives -= 1
+            if self.lives <= 0:
+                self.game_over = True
+            else:
+                self.ball_x = 400
+                self.ball_y = 300
+                self.ball_dx = 5
+                self.ball_dy = 5
+        
+        # クリア判定
+        if not self.blocks:
+            self.game_clear = True
+    
+    def draw(self):
+        """画面描画"""
+        self.screen.fill(self.BLACK)
+        
+        # 戻るボタン
+        pygame.draw.rect(self.screen, (180, 50, 50), self.back_rect)
+        back_text = self.font_small.render("ホームに戻る", True, self.WHITE)
+        self.screen.blit(back_text, (self.back_rect.x + 10, self.back_rect.y + 10))
+        
+        if not self.game_over and not self.game_clear:
+            # パドル描画
+            pygame.draw.rect(self.screen, self.WHITE, 
+                           (self.paddle_x, self.paddle_y, self.PADDLE_WIDTH, self.PADDLE_HEIGHT))
+            
+            # ボール描画
+            pygame.draw.circle(self.screen, self.WHITE, 
+                             (int(self.ball_x), int(self.ball_y)), self.BALL_SIZE // 2)
+            
+            # ブロック描画
+            for block in self.blocks:
+                pygame.draw.rect(self.screen, block['color'], block['rect'])
+                pygame.draw.rect(self.screen, self.WHITE, block['rect'], 2)
+            
+            # UI描画
+            score_text = self.font_medium.render(f"スコア: {self.score}", True, self.WHITE)
+            self.screen.blit(score_text, (50, 520))
+            
+            lives_text = self.font_medium.render(f"残機: {self.lives}", True, self.WHITE)
+            self.screen.blit(lives_text, (50, 550))
+            
+            instruction = self.font_small.render("マウスでパドルを操作", True, self.WHITE)
+            self.screen.blit(instruction, (500, 520))
+            
+        elif self.game_over:
+            game_over_text = self.font_large.render("ゲームオーバー", True, self.RED)
+            self.screen.blit(game_over_text, (250, 250))
+            
+            final_score = self.font_medium.render(f"最終スコア: {self.score}", True, self.WHITE)
+            self.screen.blit(final_score, (280, 320))
+            
+            restart_text = self.font_small.render("Rキーでリスタート", True, self.WHITE)
+            self.screen.blit(restart_text, (320, 370))
+            
+        elif self.game_clear:
+            clear_text = self.font_large.render("ゲームクリア！", True, self.GREEN)
+            self.screen.blit(clear_text, (250, 250))
+            
+            final_score = self.font_medium.render(f"最終スコア: {self.score}", True, self.WHITE)
+            self.screen.blit(final_score, (280, 320))
+            
+            restart_text = self.font_small.render("Rキーでリスタート", True, self.WHITE)
+            self.screen.blit(restart_text, (320, 370))
+
 def main():
     global current_screen, blackjack
 
@@ -501,7 +697,6 @@ def main():
                     for i, rect in enumerate(button_rects):
                         if rect.collidepoint(pos):
                             if i == 5:  # ゲーム6
-                                # ゲーム6を別ファイルで実行
                                 game6 = ShootingGame()  
                                 result = game6.run()
                                 if result == "home":
@@ -509,7 +704,6 @@ def main():
                                 elif result == "quit":
                                     running = False
                             elif i == 2:  # ゲーム3
-                                # ゲーム3（リズムゲーム）を実行
                                 game3 = RhythmGame()
                                 result = game3.run()
                                 if result == "home":
@@ -521,18 +715,18 @@ def main():
                             elif i == 1:
                                 current_screen = "game2"
                                 blackjack = BlackjackGame()
+                            elif i == 3:  # ゲーム4 - ブロック崩し
+                                game4 = BlockBreakerGame(screen)
+                                game4.run()
+                                current_screen = "home"
                             else:
-                                # ゲーム1, 4, 5は仮の画面として扱う
-                                if i == 3:
-                                    current_screen = "game4"
-                                elif i == 4:
+                                if i == 4:
                                     current_screen = "game5"
                             
-                            # game3とgame6以外の場合のみcurrent_screenを変更
-                            if i not in [2, 5]:
+                            # game3, game4, game6以外の場合のみcurrent_screenを変更
+                            if i not in [2, 3, 5]:
                                 current_screen = f"game{i+1}"
                 elif current_screen.startswith("game") and current_screen != "game6":
-                    # 他のゲーム画面で「ホームに戻る」ボタンを押したら戻る
                     back_rect = draw_game_screen(int(current_screen[-1]))
                     if back_rect.collidepoint(pos):
                         current_screen = "home"
@@ -545,9 +739,9 @@ def main():
             blackjack.update()
             blackjack.draw()
         elif current_screen == "game5":
-            game5 = HockeyGame(screen) # ゲームの準備
-            game5.run()                # ゲーム開始
-            current_screen = "home"    # ゲームが終わったらホームに戻る
+            game5 = HockeyGame(screen)
+            game5.run()
+            current_screen = "home"
         elif current_screen.startswith("game") and current_screen not in ["game3", "game6"]:
             game_num = int(current_screen[-1])
             draw_game_screen(game_num)
